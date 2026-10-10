@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://eco-dev-x.github.io/word-game-data/sitemap.xml
