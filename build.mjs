@@ -63,7 +63,7 @@ writeFileSync('data/answers.txt', answers.join('\n') + '\n'); // loaded by /word
 writeFileSync('data/words.txt', clean.map(({ w }) => w).join('\n') + '\n'); // loaded by /word-unscrambler/
 
 // ── Page template ─────────────────────────────────────────────────────────────────────────────────────────
-const NAV = [['./', 'Home'], ['wordle-solver/', 'Wordle solver'], ['word-unscrambler/', 'Unscrambler'], ['wordle-starting-words/', 'Wordle openers'], ['wordle-letter-frequency/', 'Letter frequency'], ['five-letter-words/', '5-letter words'],
+const NAV = [['./', 'Home'], ['wordle-solver/', 'Wordle solver'], ['wordle-word-finder/', 'Wordle word finder'], ['how-to-solve-wordle/', 'Wordle tips'], ['best-second-word-wordle/', 'Second words'], ['word-unscrambler/', 'Unscrambler'], ['wordle-starting-words/', 'Wordle openers'], ['wordle-letter-frequency/', 'Letter frequency'], ['five-letter-words/', '5-letter words'],
   ['two-letter-scrabble-words/', '2-letter words'], ['q-without-u/', 'Q without U'], ['anagram-algorithm/', 'Anagram code'], ['about/', 'About']];
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 function page(slug, { title, description, body }) {
@@ -98,6 +98,9 @@ write('', { title: 'Word Game Data: Open Word Lists for Wordle & Scrabble',
   description: 'Free, open word-game data: every Wordle opener ranked, Wordle letter frequency by position, 5-letter word lists, two-letter Scrabble words and Q without U, as CSV and text.',
   body: `<h1>Word Game Data</h1><p class="lead">Open, downloadable data for Wordle, Scrabble and other word games: rankings, frequencies and word lists you can check, reuse and build on.</p>
 <ul><li><a href="wordle-solver/">Wordle solver and helper</a>: enter your guesses and colours, see every answer that still fits.</li>
+<li><a href="wordle-word-finder/">Wordle word finder</a>: find 5-letter words from your greens, yellows and greys.</li>
+<li><a href="how-to-solve-wordle/">How to solve Wordle</a>: 7 tips backed by data.</li>
+<li><a href="best-second-word-wordle/">Best second word in Wordle</a> after RAISE or CRANE.</li>
 <li><a href="word-unscrambler/">Word unscrambler</a>: unscramble any letters, blanks allowed.</li>
 <li><a href="wordle-starting-words/">Every Wordle opener ranked</a>: ${allowed.length.toLocaleString('en-US')} allowed guesses scored against ${answers.length.toLocaleString('en-US')} answers.</li>
 <li><a href="wordle-letter-frequency/">Wordle letter frequency by position</a>: which letters sit where in the answer list.</li>
@@ -256,6 +259,83 @@ write('word-unscrambler/', { title: 'Word Unscrambler: Unscramble Letters (Open 
 <h2>How it works</h2><p>A word fits if it needs no letter more often than you have it; each shortfall uses up a blank. It checks all ${clean.length.toLocaleString('en-US')} words in the ENABLE-based list in your browser. The method is explained in <a href="../anagram-algorithm/">how to build an anagram solver</a>.</p>
 <p>For Scrabble and Words With Friends points, filters (starts with, ends with) and definitions, use the full <a href="${SITE}/word-unscrambler/">word unscrambler on thewordfinder.io</a>.</p>
 <script>${UNSCRAMBLE_JS}</script>` });
+
+// ── Wordle keyword pages (Search Console: "wordle word finder", "find a word wordle", "wordle best words", "wordle solving") ──
+// Best fixed second word after an opener: group answers by (opener colours, second-word colours); expected answers left = Σn²/N.
+function second(opener) {
+  const first = new Map(answers.map((a) => [a, pattern(opener, a)]));
+  return allowed.filter((g) => g !== opener).map((g) => {
+    const n = new Map();
+    for (const a of answers) { const k = first.get(a) * 243 + pattern(g, a); n.set(k, (n.get(k) ?? 0) + 1); }
+    let sq = 0, solved = 0; for (const v of n.values()) { sq += v * v; if (v === 1) solved++; }
+    return { word: g, avg: sq / answers.length, solved: solved / answers.length };
+  }).sort((x, y) => x.avg - y.avg || x.word.localeCompare(y.word));
+}
+console.log('best second words after RAISE and CRANE…');
+const afterRaise = second('raise'), afterCrane = second('crane');
+const sec = (list, w) => list.find((r) => r.word === w);
+// Self-check against the blog: RAISE then COUNT or DONUT leaves 4.1 answers on average.
+for (const w of ['count', 'donut']) if (Math.abs(sec(afterRaise, w).avg - 4.1) > 0.05) throw new Error(`raise→${w}: ${sec(afterRaise, w).avg} ≠ 4.1`);
+writeFileSync('data/allowed.txt', allowed.join('\n') + '\n'); // loaded by /wordle-word-finder/
+
+const FINDER_JS = `
+var ALL = null, ANS = null;
+function run() {
+  var out = document.getElementById('wf'); if (!ALL) { out.textContent = 'Loading words…'; return; }
+  var pat = document.getElementById('p').value.toLowerCase().replace(/[^a-z?]/g, '');
+  var inc = document.getElementById('i').value.toLowerCase().replace(/[^a-z]/g, ''), exc = document.getElementById('x').value.toLowerCase().replace(/[^a-z]/g, '');
+  var only = document.getElementById('o').checked;
+  while (pat.length < 5) pat += '?';
+  var hit = (only ? ANS : ALL).filter(function (w) {
+    for (var i = 0; i < 5; i++) if (pat[i] !== '?' && w[i] !== pat[i]) return false;
+    for (var j = 0; j < inc.length; j++) if (w.indexOf(inc[j]) < 0) return false;
+    for (var k = 0; k < exc.length; k++) if (w.indexOf(exc[k]) >= 0 && pat.indexOf(exc[k]) < 0 && inc.indexOf(exc[k]) < 0) return false;
+    return true; });
+  out.innerHTML = '<p><b>' + hit.length + '</b> word' + (hit.length === 1 ? '' : 's') + '</p><div class="chips">' + hit.slice(0, 400).map(function (w) { return '<span>' + w.toUpperCase() + '</span>'; }).join('') + '</div>' + (hit.length > 400 ? '<p>…and ' + (hit.length - 400) + ' more. Add letters to narrow it down.</p>' : ''); }
+document.getElementById('f').onsubmit = function (e) { e.preventDefault(); run(); };
+['p', 'i', 'x', 'o'].forEach(function (id) { document.getElementById(id).oninput = run; });
+Promise.all(['../data/allowed.txt', '../data/answers.txt'].map(function (u) { return fetch(u).then(function (r) { return r.text(); }); })).then(function (t) {
+  ALL = t[0].trim().split('\\n'); ANS = t[1].trim().split('\\n'); run(); });
+`;
+const FINDER_CSS = `<style>form.f{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr;margin:14px 0}form.f label{font-size:14px;color:var(--m);display:grid;gap:4px}
+form.f input[type=text]{height:44px;font-size:18px;padding:0 12px;border:1px solid #d4d4d4;border-radius:8px;text-transform:uppercase;letter-spacing:.1em}
+form.f .ck{grid-column:1/-1;display:flex;gap:8px;align-items:center}@media(max-width:600px){form.f{grid-template-columns:1fr}}</style>`;
+
+write('wordle-word-finder/', { title: 'Wordle Word Finder: Find 5-Letter Words by Pattern',
+  description: `Find a word for Wordle: enter the green letters in place, the yellow letters you know and the grey letters to skip, and see every matching 5-letter word. Free.`,
+  body: `${FINDER_CSS}<h1>Wordle word finder</h1><p class="lead">Put your green letters in their places (use ? for unknown), list the yellow letters the word must contain and the grey letters to leave out.</p>
+<form class="f" id="f"><label>Pattern (greens)<input type="text" id="p" maxlength="5" placeholder="?A??E" autocomplete="off"></label>
+<label>Must contain (yellows)<input type="text" id="i" maxlength="10" placeholder="R" autocomplete="off"></label>
+<label>Leave out (greys)<input type="text" id="x" maxlength="26" placeholder="STOU" autocomplete="off"></label>
+<label class="ck"><input type="checkbox" id="o" checked> Only common answer words (${answers.length.toLocaleString('en-US')}); untick for all ${allowed.length.toLocaleString('en-US')} allowed guesses</label></form>
+<div id="wf" aria-live="polite"></div>
+<h2>Tips</h2><ul><li>Yellow letters are in the word but not in that spot. For a stricter filter that also uses yellow positions and repeated letters, use the <a href="../wordle-solver/">Wordle solver</a>, which works from your actual guesses and colours.</li>
+<li>Many words left? Pick a guess that tests new common letters rather than one that can't be the answer. The <a href="../best-second-word-wordle/">best second words</a> page shows which.</li></ul>
+<p>Prefer a hint for today's puzzle? <a href="${SITE}/wordle-answer/">Today's Wordle hint</a> on thewordfinder.io gives the first letter and vowel count before the answer.</p>
+<script>${FINDER_JS}</script>` });
+
+const secTable = (list) => table(['#', 'Second word', 'Answers left (avg)', 'Solved by turn 3'], list.slice(0, 15).map((r, i) => [i + 1, r.word.toUpperCase(), fmt(r.avg), pct(r.solved)]));
+write('best-second-word-wordle/', { title: 'Best Second Word in Wordle After RAISE or CRANE',
+  description: `The best fixed second guess in Wordle after RAISE or CRANE, ranked from ${allowed.length.toLocaleString('en-US')} words against ${answers.length.toLocaleString('en-US')} answers. Play the pair and about 4 answers are left.`,
+  body: `<h1>Best second word in Wordle</h1><p class="lead">If you'd rather not think on turn two, play a fixed second word, whatever colours your opener shows. These pairs leave the fewest answers on average.</p>
+<div class="box">After <b>RAISE</b>, the best second word is <b>${afterRaise[0].word.toUpperCase()}</b>: about ${fmt(afterRaise[0].avg)} answers left, and ${pct(afterRaise[0].solved)} of games pinned down to exactly one answer. After <b>CRANE</b>, it's <b>${afterCrane[0].word.toUpperCase()}</b> (${fmt(afterCrane[0].avg)} left).</div>
+<h2>After RAISE</h2>${secTable(afterRaise)}<h2>After CRANE</h2>${secTable(afterCrane)}
+<p>"Solved by turn 3" is the share of answers the pair narrows to a single word, so your third guess wins. A fixed pair only works in normal mode: hard mode makes you reuse letters your opener revealed.</p>
+<p>Which opener first? See <a href="../wordle-starting-words/">every Wordle starting word ranked</a>, or the readable write-up <a href="${SITE}/blog/best-wordle-starting-words/">best Wordle starting words, measured</a> on thewordfinder.io.</p>` });
+
+const vowelsTop = freq.filter((f) => 'aeiou'.includes(f.l)).sort((a, b) => b.any - a.any).map((f) => f.l.toUpperCase());
+const lastE = freq.find((f) => f.l === 'e').pos[4], firstS = freq.find((f) => f.l === 's').pos[0];
+write('how-to-solve-wordle/', { title: 'How to Solve Wordle: 7 Tips Backed by Data',
+  description: `How to solve Wordle in fewer guesses: the best opener, the best second word, where letters usually sit and how to use yellows, all measured on ${answers.length.toLocaleString('en-US')} answers.`,
+  body: `<h1>How to solve Wordle: 7 tips backed by data</h1><p class="lead">Every tip below comes from scoring guesses against ${answers.length.toLocaleString('en-US')} everyday five-letter answers, not from gut feeling.</p>
+<h2>1. Open with RAISE</h2><p>RAISE leaves ${fmt(byWord.get('raise').avg)} answers on average, the best of all ${allowed.length.toLocaleString('en-US')} allowed guesses. CRANE leaves ${fmt(byWord.get('crane').avg)}; ADIEU leaves ${fmt(byWord.get('adieu').avg)}. <a href="../wordle-starting-words/">Full ranking</a>.</p>
+<h2>2. Don't chase vowels</h2><p>Vowel-heavy openers feel productive but narrow the answer least. Consonants and their positions do the work: ${vowelsTop.slice(0, 3).join(', ')} are the most common vowels, but one or two vowels per guess is enough.</p>
+<h2>3. Use a fixed second word</h2><p>RAISE then ${afterRaise[0].word.toUpperCase()} leaves about ${fmt(afterRaise[0].avg)} answers whatever RAISE shows. <a href="../best-second-word-wordle/">Best second words</a>.</p>
+<h2>4. Think about position</h2><p>E ends ${lastE} of the answers and S starts ${firstS}. Test letters where they usually sit. <a href="../wordle-letter-frequency/">Letter frequency by position</a>.</p>
+<h2>5. Move yellows</h2><p>A yellow letter is in the word but not there. Put it somewhere new on your next guess, so it can turn green or rule out another spot.</p>
+<h2>6. Watch for repeated letters</h2><p>Words like SPEED or SKILL trip people up. If few answers fit, consider a double letter before burning a guess on a new one.</p>
+<h2>7. Narrow it down, then guess</h2><p>When several words fit (the _IGHT trap: FIGHT, LIGHT, MIGHT, NIGHT…), play a word that tests several of those first letters at once rather than guessing them one by one. List what's left with the <a href="../wordle-word-finder/">Wordle word finder</a> or <a href="../wordle-solver/">solver</a>.</p>
+<p>Out of guesses for today? Practise with <a href="${SITE}/games/wordle-unlimited/">Wordle Unlimited</a> on thewordfinder.io.</p>` });
 
 write('about/', { title: 'About Word Game Data, by thewordfinder.io',
   description: 'Who makes Word Game Data, where the word lists come from, how they are cleaned, the licence, and how to get in touch.',
