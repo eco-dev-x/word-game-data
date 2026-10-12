@@ -8,7 +8,8 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 const SITE = 'https://thewordfinder.io';
 const AUTHOR = /author:\s*\{\s*name:\s*'([^']+)'/.exec(readFileSync('../site/src/config/site.ts', 'utf8'))[1]; // one source: site.author
 const BASE = process.env.BASE_URL?.replace(/\/$/, '') ?? '';
-const REPO = process.env.REPO_URL ?? ''; // e.g. https://github.com/<user>/word-game-data
+const REPO = process.env.REPO_URL ?? '';
+const GSC = process.env.GSC_VERIFY ?? ''; // Google Search Console HTML-tag verification code (content="…" value) // e.g. https://github.com/<user>/word-game-data
 const DATA = '../site/src/data';
 const puppeteer = createRequire(import.meta.url)('../site/node_modules/puppeteer-core');
 
@@ -71,7 +72,7 @@ function page(slug, { title, description, body }) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title><meta name="description" content="${esc(description)}">${BASE ? `<link rel="canonical" href="${BASE}/${slug}">` : ''}
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website">
-<meta name="color-scheme" content="light"><style>
+${GSC ? `<meta name="google-site-verification" content="${GSC}">` : ''}<meta name="color-scheme" content="light"><style>
 :root{color-scheme:light;--p:#6d28d9;--t:#171717;--m:#525252;--b:#e5e5e5}*{box-sizing:border-box}
 body{margin:0;background:#fff;color:var(--t);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 header{border-bottom:1px solid var(--b)}header div,main,footer{max-width:820px;margin:auto;padding:0 16px}
@@ -102,6 +103,7 @@ write('', { title: 'Word Game Data: Open Word Lists for Wordle & Scrabble',
 <li><a href="how-to-solve-wordle/">How to solve Wordle</a>: 7 tips backed by data.</li>
 <li><a href="best-second-word-wordle/">Best second word in Wordle</a> after RAISE or CRANE.</li>
 <li><a href="word-unscrambler/">Word unscrambler</a>: unscramble any letters, blanks allowed.</li>
+<li><a href="word-finder-alternatives/">Word finder alternatives compared</a>: Word.tips, WordFinderX, WordFind and <a href="thewordfinder/">TheWordFinder.io</a>.</li>
 <li><a href="wordle-starting-words/">Every Wordle opener ranked</a>: ${allowed.length.toLocaleString('en-US')} allowed guesses scored against ${answers.length.toLocaleString('en-US')} answers.</li>
 <li><a href="wordle-letter-frequency/">Wordle letter frequency by position</a>: which letters sit where in the answer list.</li>
 <li><a href="five-letter-words/">5-letter words</a>: ${five.length.toLocaleString('en-US')} words as text and CSV with Scrabble points.</li>
@@ -337,6 +339,60 @@ write('how-to-solve-wordle/', { title: 'How to Solve Wordle: 7 Tips Backed by Da
 <h2>7. Narrow it down, then guess</h2><p>When several words fit (the _IGHT trap: FIGHT, LIGHT, MIGHT, NIGHT…), play a word that tests several of those first letters at once rather than guessing them one by one. List what's left with the <a href="../wordle-word-finder/">Wordle word finder</a> or <a href="../wordle-solver/">solver</a>.</p>
 <p>Out of guesses for today? Practise with <a href="${SITE}/games/wordle-unlimited/">Wordle Unlimited</a> on thewordfinder.io.</p>` });
 
+// ── Brand and alternative pages (owner request, 12 Oct 2026) ────────────────────────────────────────────────
+// Competitor facts are only what their own homepages list (checked 12 Oct 2026); no claims about their speed, ads or quality.
+// Pages are "X alternative" pages: they never present themselves as the other site, and each says so.
+const CHECKED = '12 October 2026';
+const NOTE = `<p class="note" style="color:var(--m);font-size:14px">Word.tips, WordFinderX and WordFind are trademarks of their owners and are named here only to compare; this site and thewordfinder.io are not affiliated with them. Their features are as listed on their own websites on ${CHECKED}.</p>`;
+const OURS = `<ul>
+<li><a href="${SITE}/">Word finder</a>: up to 15 letters, ? for blank tiles, Scrabble and Words With Friends points, filters for starts with, ends with and contains.</li>
+<li><a href="${SITE}/daily-answers/">Daily hints</a> for Wordle, Connections, Strands and Spelling Bee, with the answer hidden until you reveal it.</li>
+<li><a href="${SITE}/games/">Free browser games</a>: Wordle Unlimited, Quad and Octo Wordle, Sudoku, Word Search and Connections Unlimited, each with a daily puzzle and an unlimited mode.</li>
+<li><a href="${SITE}/anagram-solver/">Anagram solver</a>, <a href="${SITE}/word-unscrambler/">word unscrambler</a> and <a href="${SITE}/wordle-solver/">Wordle solver</a>.</li>
+<li>Open word data: the lists behind it are published here, so any result can be checked.</li></ul>`;
+const ALTS = [
+  { slug: 'word-tips-alternative', name: 'Word.tips', title: 'Word.tips Alternative: Free Word Finder & Daily Hints',
+    theirs: 'a word finder for Scrabble, Words With Friends and Wordle; daily hints and answers for Wordle, Connections, Strands, Spelling Bee, Pips and Contexto; a mini crossword and a word game; and a mobile app',
+    angle: 'If you use Word.tips for daily hints, the closest match is our hints-first daily pages; if you use it for racks, our word finder works the same way, with ? for blanks.' },
+  { slug: 'wordfinderx-alternative', name: 'WordFinderX', title: 'WordFinderX Alternative: Free Word Finder & Word Games',
+    theirs: 'a word finder (made by WordTips) that takes up to 15 letters and 3 wildcards, with helpers for Scrabble, Words With Friends, Wordfeud, Word Cookies and Wordscapes and word lists by length',
+    angle: 'If you use WordFinderX for Scrabble or Words With Friends racks, our word finder takes the same input (15 letters, blanks) and shows points for both games side by side.' },
+  { slug: 'wordfind-alternative', name: 'WordFind', title: 'WordFind Alternative: Free Scrabble Word Finder',
+    theirs: 'a Scrabble word finder running since 2010, with helpers in French, German, Italian, Spanish and Romanian, Boggle, Hangman and Text Twist solvers, and a daily Wordle answer',
+    angle: 'If you use WordFind for English Scrabble racks, our word finder covers the same job; WordFind is the better pick if you play in other languages, which we don\'t support.' },
+];
+for (const a of ALTS) write(`${a.slug}/`, { title: a.title,
+  description: `Looking for a ${a.name} alternative? A free word finder with Scrabble and Words With Friends points, hints-first daily puzzle pages and free word games.`,
+  body: `<h1>${a.name} alternative</h1><p class="lead">${a.name} offers ${a.theirs}. If you want another free option, this is what <a href="${SITE}/">thewordfinder.io</a> has.</p>
+<h2>What you get</h2>${OURS}<h2>Which to use</h2><p>${a.angle}</p>
+<p>See all three side by side: <a href="../word-finder-alternatives/">word finder alternatives compared</a>.</p>${NOTE}` });
+
+const yes = '✓', no = 'not listed';
+write('word-finder-alternatives/', { title: 'Word Finder Alternatives: Word.tips, WordFinderX, WordFind',
+  description: 'Word finder sites compared: Word.tips, WordFinderX, WordFind and thewordfinder.io, by daily hints, games, blanks and languages, as listed on each site.',
+  body: `<h1>Word finder alternatives compared</h1><p class="lead">Four free word finder sites and what each one offers, as listed on their own websites on ${CHECKED}. All four unscramble letters for Scrabble and Words With Friends; the differences are in the extras.</p>
+${table(['', 'Word.tips', 'WordFinderX', 'WordFind', 'thewordfinder.io'], [
+    ['Word finder with blank tiles', yes, `${yes} (3 wildcards)`, yes, `${yes} (? blanks)`],
+    ['Daily NYT puzzle hints', `${yes} Wordle, Connections, Strands, Spelling Bee, Pips, Contexto`, no, `${yes} Wordle`, `${yes} Wordle, Connections, Strands, Spelling Bee`],
+    ['Games to play on the site', `${yes} mini crossword, word game`, no, no, `${yes} 6 games`],
+    ['Other game helpers', 'Words With Friends, Word Chums, jumble', 'Wordfeud, Word Cookies, Wordscapes, jumble', 'Boggle, Hangman, Text Twist, jumble', 'Wordle, crossword, Spelling Bee, Letter Boxed, Squaredle solvers'],
+    ['Languages other than English', no, no, `${yes} French, German, Italian, Spanish, Romanian`, '—'],
+    ['Mobile app', yes, no, no, 'coming soon'],
+  ])}
+<h2>Which one should you use?</h2><ul><li><b>Many daily NYT games in one place:</b> Word.tips covers the most daily puzzles.</li>
+<li><b>Other languages:</b> WordFind is the only one with non-English helpers.</li>
+<li><b>Free games plus hints that don't spoil the answer:</b> <a href="${SITE}/">thewordfinder.io</a> (disclosure: that's ours).</li></ul>
+<p>More on each: <a href="../word-tips-alternative/">Word.tips alternative</a> · <a href="../wordfinderx-alternative/">WordFinderX alternative</a> · <a href="../wordfind-alternative/">WordFind alternative</a> · <a href="../thewordfinder/">about thewordfinder.io</a></p>${NOTE}` });
+
+write('thewordfinder/', { title: 'TheWordFinder.io: Free Word Finder, Wordle Hints & Games',
+  description: 'TheWordFinder.io is a free word finder and anagram solver with daily Wordle, Connections, Strands and Spelling Bee hints and free browser word games.',
+  body: `<h1>TheWordFinder.io</h1><p class="lead"><a href="${SITE}/">thewordfinder.io</a> is a free word finder with daily puzzle hints and browser word games, made by ${AUTHOR}. No account needed.</p>
+<h2>What's on it</h2>${OURS}
+<h2>Popular pages</h2><ul><li><a href="${SITE}/wordle-answer/">Wordle hint today</a></li><li><a href="${SITE}/connections-hints/">Connections hints today</a></li>
+<li><a href="${SITE}/games/wordle-unlimited/">Wordle Unlimited</a></li><li><a href="${SITE}/blog/best-wordle-starting-words/">Best Wordle starting words</a></li></ul>
+<p>Comparing options? See <a href="../word-finder-alternatives/">word finder alternatives compared</a>.</p>` });
+const EXTRA_SLUGS = ['thewordfinder/', 'word-finder-alternatives/', ...ALTS.map((a) => `${a.slug}/`)]; // not in the top nav; listed on the home page and in the sitemap
+
 write('about/', { title: 'About Word Game Data, by thewordfinder.io',
   description: 'Who makes Word Game Data, where the word lists come from, how they are cleaned, the licence, and how to get in touch.',
   body: `<h1>About</h1><p>Word Game Data is made by ${AUTHOR}, who runs <a href="${SITE}/">thewordfinder.io</a>, a free word finder with daily puzzle hints and browser word games. This project publishes the underlying data openly so anyone can check it or build on it.</p>
@@ -377,7 +433,7 @@ Method, code and charts are on the website. Word lists come from ENABLE (public 
 Rebuild: \`node build.mjs\` (needs the thewordfinder.io site checkout next to this folder). Licence: code MIT, word lists public domain.
 `);
 if (BASE) {
-  const slugs = ['', ...NAV.slice(1).map(([h]) => h)];
+  const slugs = ['', ...NAV.slice(1).map(([h]) => h), ...EXTRA_SLUGS];
   writeFileSync('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${slugs.map((s) => `<url><loc>${BASE}/${s}</loc></url>`).join('')}</urlset>\n`);
   writeFileSync('robots.txt', `User-agent: *\nAllow: /\nSitemap: ${BASE}/sitemap.xml\n`);
 }
