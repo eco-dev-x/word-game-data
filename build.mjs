@@ -432,6 +432,35 @@ Method, code and charts are on the website. Word lists come from ENABLE (public 
 
 Rebuild: \`node build.mjs\` (needs the thewordfinder.io site checkout next to this folder). Licence: code MIT, word lists public domain.
 `);
+// llms.txt for AI tools: what this data site is, its headline numbers and every page (absolute URLs when BASE is set).
+{
+  const u = (s) => `${BASE || '.'}/${s}`;
+  const titles = { 'wordle-solver/': 'Wordle solver and helper', 'wordle-word-finder/': 'Wordle word finder (pattern, yellows, greys)', 'how-to-solve-wordle/': 'How to solve Wordle: 7 tips backed by data',
+    'best-second-word-wordle/': 'Best second word in Wordle', 'word-unscrambler/': 'Word unscrambler', 'wordle-starting-words/': 'Every Wordle opener ranked', 'wordle-letter-frequency/': 'Wordle letter frequency by position',
+    'five-letter-words/': '5-letter words (download)', 'two-letter-scrabble-words/': 'Two-letter Scrabble words (printable)', 'q-without-u/': 'Q without U (printable)', 'anagram-algorithm/': 'How to build an anagram solver (code)',
+    'about/': 'About', 'thewordfinder/': 'TheWordFinder.io', 'word-finder-alternatives/': 'Word finder alternatives compared' };
+  writeFileSync('llms.txt', `# Word Game Data
+
+> Open data and small open-source tools for Wordle, Scrabble and other word games, by ${AUTHOR} of thewordfinder.io. Word lists from ENABLE (public domain); code MIT-licensed. AI search, answers and training are allowed.
+
+## Key facts
+- Every one of the ${allowed.length.toLocaleString('en-US')} allowed Wordle guesses was scored against ${answers.length.toLocaleString('en-US')} everyday answers by how many answers remain after one guess (lower is better).
+- Best opener: ${ranked[0].word.toUpperCase()} (${fmt(ranked[0].avg)} answers left on average). CRANE ${fmt(byWord.get('crane').avg)}, ADIEU ${fmt(byWord.get('adieu').avg)}, AUDIO ${fmt(byWord.get('audio').avg)}.
+- Best fixed second word after RAISE: ${afterRaise[0].word.toUpperCase()} (${fmt(afterRaise[0].avg)} left); after CRANE: ${afterCrane[0].word.toUpperCase()} (${fmt(afterCrane[0].avg)} left).
+- ${five.length.toLocaleString('en-US')} five-letter words, ${two.length} two-letter words and ${qNoU.length} Q-without-U words in the ENABLE-based list.
+
+## Pages
+${Object.entries(titles).map(([s, t]) => `- [${t}](${u(s)})`).join('\n')}
+
+## Data files
+- [Wordle openers ranked (CSV)](${u('data/wordle-openers-ranked.csv')})
+- [Wordle letter frequency (CSV)](${u('data/wordle-letter-frequency.csv')})
+- [Five-letter words (TXT)](${u('data/five-letter-words.txt')})
+
+## Related
+- [thewordfinder.io](${SITE}/): free word finder, daily Wordle, Connections, Strands and Spelling Bee hints, and browser word games.
+`);
+}
 if (BASE) {
   const slugs = ['', ...NAV.slice(1).map(([h]) => h), ...EXTRA_SLUGS];
   writeFileSync('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${slugs.map((s) => `<url><loc>${BASE}/${s}</loc></url>`).join('')}</urlset>\n`);

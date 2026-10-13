@@ -1,0 +1,33 @@
+# Word Game Data
+
+> Open data and small open-source tools for Wordle, Scrabble and other word games, by David James of thewordfinder.io. Word lists from ENABLE (public domain); code MIT-licensed. AI search, answers and training are allowed.
+
+## Key facts
+- Every one of the 8,613 allowed Wordle guesses was scored against 1,574 everyday answers by how many answers remain after one guess (lower is better).
+- Best opener: RAISE (37.8 answers left on average). CRANE 48.3, ADIEU 80.8, AUDIO 124.0.
+- Best fixed second word after RAISE: DONUT (4.1 left); after CRANE: TOILS (3.4 left).
+- 8,613 five-letter words, 106 two-letter words and 31 Q-without-U words in the ENABLE-based list.
+
+## Pages
+- [Wordle solver and helper](https://eco-dev-x.github.io/word-game-data/wordle-solver/)
+- [Wordle word finder (pattern, yellows, greys)](https://eco-dev-x.github.io/word-game-data/wordle-word-finder/)
+- [How to solve Wordle: 7 tips backed by data](https://eco-dev-x.github.io/word-game-data/how-to-solve-wordle/)
+- [Best second word in Wordle](https://eco-dev-x.github.io/word-game-data/best-second-word-wordle/)
+- [Word unscrambler](https://eco-dev-x.github.io/word-game-data/word-unscrambler/)
+- [Every Wordle opener ranked](https://eco-dev-x.github.io/word-game-data/wordle-starting-words/)
+- [Wordle letter frequency by position](https://eco-dev-x.github.io/word-game-data/wordle-letter-frequency/)
+- [5-letter words (download)](https://eco-dev-x.github.io/word-game-data/five-letter-words/)
+- [Two-letter Scrabble words (printable)](https://eco-dev-x.github.io/word-game-data/two-letter-scrabble-words/)
+- [Q without U (printable)](https://eco-dev-x.github.io/word-game-data/q-without-u/)
+- [How to build an anagram solver (code)](https://eco-dev-x.github.io/word-game-data/anagram-algorithm/)
+- [About](https://eco-dev-x.github.io/word-game-data/about/)
+- [TheWordFinder.io](https://eco-dev-x.github.io/word-game-data/thewordfinder/)
+- [Word finder alternatives compared](https://eco-dev-x.github.io/word-game-data/word-finder-alternatives/)
+
+## Data files
+- [Wordle openers ranked (CSV)](https://eco-dev-x.github.io/word-game-data/data/wordle-openers-ranked.csv)
+- [Wordle letter frequency (CSV)](https://eco-dev-x.github.io/word-game-data/data/wordle-letter-frequency.csv)
+- [Five-letter words (TXT)](https://eco-dev-x.github.io/word-game-data/data/five-letter-words.txt)
+
+## Related
+- [thewordfinder.io](https://thewordfinder.io/): free word finder, daily Wordle, Connections, Strands and Spelling Bee hints, and browser word games.
